@@ -67,6 +67,7 @@ class Berserker(Character):
     def __init__(self, name, health, attack, defense, mana):
         super().__init__(name, health, attack, defense, mana)
     def rend(self, target):
+        self.cMana -= 3
         damage = self.power
         if target.block == True:
             damage /= target.shield
