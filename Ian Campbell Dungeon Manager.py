@@ -1,5 +1,6 @@
 import random
-
+import time
+import os
 
 
 class Character:
@@ -19,7 +20,7 @@ class Character:
     def status(self):
         print(f"{self.name}: {self.cHealth}/{self.mHealth} health, {self.cMana}/{self.mMana} mana")
     def isAlive(self):
-        if self.health > 0:
+        if self.cHealth > 0:
             return(True)
 
     def strike(self, target):
@@ -30,6 +31,11 @@ class Character:
         damage -= target.defense
         target.cHealth -= damage
         print(f"{self.name} deals {damage} damage to {target.name}!")
+
+    def healthRegen(self, amount):
+        self.cHealth += amount
+        if self.cHealth > self.mHealth:
+            self.cHealth = self.mHealth
     
     def manaRegen(self, amount):
         self.cMana += amount
@@ -57,17 +63,19 @@ class Character:
             self.block = False
             self.bleed()
             self.status()
+            return(True)
         else:
             print(f"{self.name} is dead!")
+            return(False)
         
 
-        
-
+#Player Classes:
 class Berserker(Character):
     def __init__(self, name, health, attack, defense, mana):
         super().__init__(name, health, attack, defense, mana)
+        self.manaCost = 3
     def rend(self, target):
-        self.cMana -= 3
+        self.cMana -= self.manaCost
         damage = self.power
         if target.block == True:
             damage /= target.shield
@@ -79,14 +87,14 @@ class Berserker(Character):
         target.bleedDamage += round(damage / 2)
         print(f"{target.name} is bleeding!")    
     def action(self, target):
-        print("Choose your action: ")
+        print("What will you do?: ")
         choice = int(input("1: Attack \n2: Block\n3: Rend (3 Mana)\n1-3: "))
         if choice == 1:
             self.strike(target)
         elif choice == 2:
             self.defend()
         elif choice == 3:
-            if self.cMana >= 3:
+            if self.cMana >= self.manaCost:
                 self.rend(target)
             else:
                 print(f"{self.name} tried, but didn't have the Mana.")
@@ -100,37 +108,71 @@ class Berserker(Character):
         print(f"Defense: {self.defense}")
         print(f"Special Attack: \n Rend: Causes the target to bleed for two turns.")
 
-
+#Enemy Types:
 class Goblin(Character):
     def __init__(self, name, health, attack, defense, mana):
         super().__init__(name, health, attack, defense, mana)
-    def action(self, target):
-        choice = random.randint(1, 8)
-        if choice >= 5:
-            self.strike(target)
-        elif choice >= 2:
+    def actionSelect(self):
+        self.choice = random.randint(1, 8)
+        if self.choice >= 5:
+            print(f"{self.name} takes an aggressive stance.")
+        elif self.choice >= 2:
             self.defend()
+            print(f"{self.name} raises its guard!")
         else:
-            print(f"{self.name} couldn't choose, and wasted the turn.")    
+            print(f"{self.name} looks lost.")         
+    def action(self, target):
+        if self.choice >= 5:
+            self.strike(target)
+        else:
+            print(f"{self.name} wasted the turn.") 
     
         
 
-#Character Creation
+#Character Creation:
 realjob = 0
 while realjob == 0:
     realjob = 1
-    job = int(input("Choose your class:\n 1. Berserker\n "))
+    job = int(input("Choose your class:\n 1. Berserker\n 1-1: "))
 if job == 1:
     player = Berserker(input("Name your Character: "), 50, 10, 0, 5)
 else:
     print("Please choose a number from the list.")
     realjob = 0
 
+def combat(player):
+    #Combat Initiation:
+    enemyList = [Goblin("Goblin Joe", 30, 6, 1, 0)]
+    enemy = random.choice(enemyList)
+    print(f"{player.name} is attacked by {enemy.name}!")
+    #Combat Loop:
+    battleEnd = 0
+    while battleEnd == 0:
+        eAlive = enemy.turnStart()
+        if eAlive == True:
+            enemy.actionSelect()
+            pAlive = player.turnStart()
+            if pAlive == True:
+                player.action(enemy)
+                enemy.action(player)
+            else: battleEnd = 2
+        else: 
+            battleEnd = 1
+            if player.cHealth <= 0:
+                player.cHealth = 1
+    if battleEnd == 1: 
+        print("Victory!")
+        return(0)
+    if battleEnd == 2:
+        print("Game Over!")
+        return(1)
+        
 
-    
+   
 
 
-#Main Menu
+
+#Main Menu:
 quit = 0
 while quit == 0:
     print("Options: \n " +
@@ -144,7 +186,7 @@ while quit == 0:
     if choice == 1:
         player.charsheet()
     elif choice == 2:
-        pass
+        quit = combat()
     elif choice == 3:
         pass
     elif choice == 4:
