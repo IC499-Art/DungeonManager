@@ -21,7 +21,9 @@ class Character:
         print(f"{self.name}: {self.cHealth}/{self.mHealth} health, {self.cMana}/{self.mMana} mana")
     def isAlive(self):
         if self.cHealth > 0:
-            return(True)
+            return True
+        else:
+            print(f"{self.name} is dead!")
 
     def strike(self, target):
         damage = self.power
@@ -31,6 +33,7 @@ class Character:
         damage -= target.defense
         target.cHealth -= damage
         print(f"{self.name} deals {damage} damage to {target.name}!")
+        return damage
 
     def healthRegen(self, amount):
         self.cHealth += amount
@@ -51,21 +54,20 @@ class Character:
         if self.bleedStacks > 0:
             self.cHealth -= self.bleedDamage
             self.bleedStacks -= 1
-            print(f"{self.name} bled for {self.bleedDamage} damage!")
+            print(f"{self.name} bleeds for {self.bleedDamage} damage!")
             if self.bleedStacks == 0:
                 self.bleedDamage = 0
-                print(f"{self.name} stopped bleeding!")
+                print(f"{self.name} stops bleeding!")
     
     def turnStart(self):
-        alive = self.isAlive
+        alive = self.isAlive()
         if alive == True:    
             self.manaRegen(1)
             self.block = False
             self.bleed()
             self.status()
-            return(True)
+            return self.isAlive()
         else:
-            print(f"{self.name} is dead!")
             return(False)
         
 
@@ -76,13 +78,8 @@ class Berserker(Character):
         self.manaCost = 3
     def rend(self, target):
         self.cMana -= self.manaCost
-        damage = self.power
-        if target.block == True:
-            damage /= target.shield
-            round(damage)
-        damage -= target.defense
-        target.cHealth -= damage
-        print(f"{self.name} tears into {target.name} for {damage} damage!")
+        damage = self.strike(target)
+        print(f"{self.name} tears into {target.name}!")
         target.bleedStacks += 2
         target.bleedDamage += round(damage / 2)
         print(f"{target.name} is bleeding!")    
@@ -118,7 +115,6 @@ class Goblin(Character):
             print(f"{self.name} takes an aggressive stance.")
         elif self.choice >= 2:
             self.defend()
-            print(f"{self.name} raises its guard!")
         else:
             print(f"{self.name} looks lost.")         
     def action(self, target):
@@ -186,7 +182,7 @@ while quit == 0:
     if choice == 1:
         player.charsheet()
     elif choice == 2:
-        quit = combat()
+        quit = combat(player)
     elif choice == 3:
         pass
     elif choice == 4:
