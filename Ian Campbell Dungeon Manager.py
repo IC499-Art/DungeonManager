@@ -123,7 +123,16 @@ class Goblin(Character):
         else:
             print(f"{self.name} wasted the turn.") 
     
-        
+def spawnEnemy(tier):
+    if tier == 1:
+        minionList = [Goblin("Goblin", 30, 6, 1, 0)]
+        enemy = random.choice(minionList)    
+    elif tier == 2: 
+        bossList = []
+        enemy = random.choice(bossList)
+    else:
+        enemy = Goblin("Dead Goblin", 0, 6, 1, 0)
+    return enemy
 
 #Character Creation:
 realjob = 0
@@ -136,10 +145,9 @@ else:
     print("Please choose a number from the list.")
     realjob = 0
 
-def combat(player):
+def combat(player, tier):
     #Combat Initiation:
-    enemyList = [Goblin("Goblin Joe", 30, 6, 1, 0)]
-    enemy = random.choice(enemyList)
+    enemy = spawnEnemy(tier)
     print(f"{player.name} is attacked by {enemy.name}!")
     #Combat Loop:
     battleEnd = 0
@@ -182,7 +190,7 @@ while quit == 0:
     if choice == 1:
         player.charsheet()
     elif choice == 2:
-        quit = combat(player)
+        quit = combat(player, 1)
     elif choice == 3:
         pass
     elif choice == 4:
