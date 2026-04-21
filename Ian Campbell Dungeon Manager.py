@@ -20,7 +20,7 @@ class Character:
         self.poisonStacks = 0
         self.pTypes = ["Health", "Mana", "Poison"]
         self.pDesc = ["Restore a large portion of Health.", "Start next battle with full Mana.", "Poison weapon for next battle."]
-        self.pQuant = [0, 0, 0]
+        self.pQuant = [1, 0, 0]
     
     def status(self):
         print(f"{self.name}: {self.cHealth}/{self.mHealth} health, {self.cMana}/{self.mMana} mana")
@@ -171,13 +171,13 @@ class Paladin(Character):
         self.level = 1
     def smite(self, target):
         damage = self.strike(target)
-        holyDamage = damage + self.cMana
+        holyDamage = (self.cMana * 2) + damage
         target.cHealth -= holyDamage
         print(f"Holy light scorches {target.name} for {holyDamage} damage!")
         self.cMana = 0  
     def healPrayer(self):
         misHealth = (self.mHealth - self.cHealth)
-        self.hRegen(misHealth*0.7)
+        self.hRegen(misHealth*0.8)
         self.cMana -= self.manaCostB
         self.bleedStacks = 0
         self.poisonStacks = 0
