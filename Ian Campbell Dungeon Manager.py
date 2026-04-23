@@ -345,7 +345,7 @@ def spawnEnemy(tier, difficulty, group):
         enemy = Goblin(name, health, power, defense, mana, aggro)
     if difficulty >= 25:
        pScaling = (difficulty - 23) / 2
-       enemy.power += pScaling
+       enemy.power += round(pScaling)
     if difficulty >= 30:
         hScaling = ((difficulty - 28) * 0.1) + 1
         enemy.mHealth = round(enemy.mHealth * hScaling)
