@@ -111,12 +111,12 @@ class Berserker(Character):
         print(f"{target.name} is bleeding!")    
     def action(self, target):
         print("What will you do?: ")
-        choice = int(input(f"1: Attack \n2: Block\n3: Rend (Costs {self.manaCost} Mana)\n1-3: "))
-        if choice == 1:
+        choice = input(f"1: Attack \n2: Block\n3: Rend (Costs {self.manaCost} Mana)\n1-3: ")
+        if choice == "1":
             self.strike(target)
-        elif choice == 2:
+        elif choice == "2":
             self.defend()
-        elif choice == 3:
+        elif choice == "3":
             if self.cMana >= self.manaCost:
                 self.rend(target)
             else:
@@ -143,12 +143,12 @@ class Assassin(Character):
         print(f"{target.name} is poisoned!")  
     def action(self, target):
         print("What will you do?: ")
-        choice = int(input(f"1: Attack \n2: Block\n3: Poison Dart (Costs at least {self.manaCost} Mana)\n1-3: "))
-        if choice == 1:
+        choice = input(f"1: Attack \n2: Block\n3: Poison Dart (Costs at least {self.manaCost} Mana)\n1-3: ")
+        if choice == "1":
             self.strike(target)
-        elif choice == 2:
+        elif choice == "2":
             self.defend()
-        elif choice == 3:
+        elif choice == "3":
             if self.cMana >= self.manaCost:
                 self.pDart(target)
             else:
@@ -184,17 +184,17 @@ class Paladin(Character):
         print(f"{self.name}'s wounds close!")
     def action(self, target):
         print("What will you do?: ")
-        choice = int(input(f"1: Attack \n2: Block\n3: Smite (Costs at least {self.manaCostA} Mana)\n4: Heal Prayer (Costs {self.manaCostB} Mana)\n1-3: "))
-        if choice == 1:
+        choice = input(f"1: Attack \n2: Block\n3: Smite (Costs at least {self.manaCostA} Mana)\n4: Heal Prayer (Costs {self.manaCostB} Mana)\n1-3: ")
+        if choice == "1":
             self.strike(target)
-        elif choice == 2:
+        elif choice == "2":
             self.defend()
-        elif choice == 3:
+        elif choice == "3":
             if self.cMana >= self.manaCostA:
                 self.smite(target)
             else:
                 print(f"{self.name} tried, but didn't have the Mana.")
-        elif choice == 4:
+        elif choice == "4":
             if self.cMana >= self.manaCostB:
                 self.healPrayer()
             else:
@@ -223,17 +223,29 @@ class Goblin(Character):
         print(f"{self.name} tears into {target.name}!")
         target.bleedStacks += 2
         target.bleedDamage += round(damage / 2)
-        print(f"{target.name} is bleeding!")    
+        print(f"{target.name} is bleeding!")
+    def poisonWeapon(self):
+        if self.wPoison == 0:
+            self.wPoison += 2
+            print(f"{self.name} poisoned their weapon!")
+        else:
+            self.wPoison += 1
+            print(f"{self.name} added more poison to their weapon!")    
     def actionSelect(self):
         self.choice = random.randint(1, self.aggro)
-        if self.choice >= 5:
+        if self.choice >= 11:
+            print(f"{self.name} is fiddling with something...")
+        elif self.choice >= 5:
             print(f"{self.name} takes an aggressive stance.")
         elif self.choice >= 2:
             self.defend()
         else:
             print(f"{self.name} looks lost.")         
     def action(self, target):
-        if self.choice >= 8:
+        if self.choice >= 11:
+            self.cMana -= 1
+            self.poisonWeapon()
+        elif self.choice >= 8:
             if self.cMana >= self.manaCost:
                 self.rend(target)
             else:
@@ -295,15 +307,15 @@ def LevelUp(player):
     valid = 0
     while valid == 0:
         valid = 1
-        choice = int(input("What do you want to upgrade?\n 1: +5 Health\n 2: +1 Attack Power\n 3: +1 Mana\n 1-3: "))
-        if choice == 1:
+        choice = input("What do you want to upgrade?\n 1: +5 Health\n 2: +1 Attack Power\n 3: +1 Mana\n 1-3: ")
+        if choice == "1":
             player.mHealth += 5
             player.cHealth += 5
             print("Health upgraded.")
-        elif choice == 2:
+        elif choice == "2":
             player.power += 1
             print("Power upgraded.")
-        elif choice == 3:
+        elif choice == "3":
             player.mMana += 1
             print("Mana upgraded.")
         else:
@@ -313,32 +325,38 @@ def LevelUp(player):
 
 #Combat
 
-def spawnEnemy(tier, difficulty):
-    if tier == 1:
-        minionList = [Goblin("Goblin", 30, 6, 1, 4, 8)]
-        enemy = random.choice(minionList)    
-    elif tier == 2: 
-        bossList = [Goblin("Bob Goblin", 50, 6, 2, 7, 10)]
-        enemy = random.choice(bossList)
-    elif tier == 3:
-        summon = random.randint(1, 1)
-        if summon == 1:
-            enemy = Goblin("Gobert the Terrible", 60, 7, 3, 9, 10)
-            enemy.wPoison = 2          
-    else:
-        enemy = Goblin("Dead Goblin", 0, 6, 1, 0, 0)
-    
-    if difficulty >= 12:
-        hScaling = ((difficulty - 10) * 0.1) + 1
-        pScaling = (difficulty - 10)
+def spawnEnemy(tier, difficulty, group):
+    if group == 1:
+        gobNames = ["Goblin", "Bob Goblin", "Gobert the Terrible"]
+        name = gobNames[tier]
+        gobHealth = [30, 50, 70, 90]
+        if difficulty < 20:
+            health = gobHealth[tier]
+        else:
+            health = gobHealth[tier + 1]
+        gobPow = [5, 6, 7]
+        power = gobPow[tier]
+        gobDef = [1, 2, 3]
+        defense = gobDef[tier]
+        gobMana = [4, 7, 9]
+        mana = gobMana[tier]
+        gobAggro = [8, 10, 12]
+        aggro = gobAggro[tier]
+        enemy = Goblin(name, health, power, defense, mana, aggro)
+    if difficulty >= 25:
+       pScaling = (difficulty - 23) / 2
+       enemy.power += pScaling
+    if difficulty >= 30:
+        hScaling = ((difficulty - 28) * 0.1) + 1
         enemy.mHealth = round(enemy.mHealth * hScaling)
         enemy.cHealth = round(enemy.cHealth * hScaling)
-        enemy.power += pScaling
     return enemy
+    
 
-def combat(player, tier, difficulty):
+
+def combat(player, tier, difficulty, group):
     #Combat Initiation:
-    enemy = spawnEnemy(tier, difficulty)
+    enemy = spawnEnemy(tier, difficulty, group)
     print(f"{player.name} is attacked by {enemy.name}!")
     time.sleep(1)
     #Combat Loop:
@@ -361,9 +379,9 @@ def combat(player, tier, difficulty):
         print("Victory!")
         time.sleep(2)
         player.battleWon()
-        for count in range(tier):
+        for count in range(tier+1):
             Loot(player)
-        for count in range(tier):
+        for count in range(tier+1):
             LevelUp(player)
         player.cMana = 0
         return(0)
@@ -376,16 +394,16 @@ def combat(player, tier, difficulty):
 realjob = 0
 while realjob == 0:
     realjob = 1
-    job = int(input("Choose your class:\n 1. Berserker\n 2. Assassin\n 3. Paladin\n 1-3: "))
-if job == 1:
-    player = Berserker(input("Name your Character: "), 50, 8, 0, 7)
-elif job == 2:
-    player = Assassin(input("Name your Character: "), 40, 10, 0, 6)
-elif job == 3:
-    player = Paladin(input("Name your Character: "), 50, 7, 2, 7)
-else:
-    print("Please choose a number from the list.")
-    realjob = 0
+    job = input("Choose your class:\n 1. Berserker\n 2. Assassin\n 3. Paladin\n 1-3: ")
+    if job == "1":
+        player = Berserker(input("Name your Character: "), 50, 8, 0, 7)
+    elif job == "2":
+        player = Assassin(input("Name your Character: "), 40, 10, 0, 6)
+    elif job == "3":
+        player = Paladin(input("Name your Character: "), 50, 7, 2, 7)
+    else:
+        print("Please choose a number from the list.")
+        realjob = 0
 
 #Main Menu:
 quit = 0
@@ -397,26 +415,27 @@ while quit == 0:
           "4. Save Game \n " + 
           "5. Load Game \n " +
           "6. Exit")
-    choice = int(input("What will you do? 1-6: "))
-    if choice == 1:
+    choice = input("What will you do? 1-6: ")
+    if choice == "1":
         player.charsheet()
-    elif choice == 2:
+    elif choice == "2":
+        group = random.randint(1, 1)
         difficulty = 6 + player.level
         event = random.randint(1, difficulty)
         if event >= 15:
-            quit = combat(player, 3, difficulty)
+            quit = combat(player, 2, difficulty, group)
         elif event >= 10:
-            quit = combat(player, 2, difficulty)
+            quit = combat(player, 1, difficulty, group)
         elif event >= 6:
             print(f"{player.name} discovered a treasure chest! ")
             Loot(player)
         else:    
-            quit = combat(player, 1, difficulty)
-    elif choice == 3:
+            quit = combat(player, 0, difficulty, group)
+    elif choice == "3":
         useItem(player)
-    elif choice == 4:
+    elif choice == "4":
         pass
-    elif choice == 5:
+    elif choice == "5":
         pass
     else:
         confirm = str.lower(input("Are you sure you want to quit? y/n: "))
