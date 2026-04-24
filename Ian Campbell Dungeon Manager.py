@@ -38,9 +38,9 @@ class Character:
         damage -= target.defense
         target.cHealth -= damage
         print(f"{self.name} deals {damage} damage to {target.name}!")
-        if self.wPoison > 1:
+        if self.wPoison >= 1:
             target.poisonStacks += self.wPoison
-            print(f"{self.name} poisons {target.name}!")
+            print(f"{target.name} is poisoned!")
         return damage
 
     def hRegen(self, amount):
@@ -107,7 +107,7 @@ class Berserker(Character):
         damage = self.strike(target)
         print(f"{self.name} tears into {target.name}!")
         target.bleedStacks += 2
-        target.bleedDamage += round(damage / 2)
+        target.bleedDamage += round(damage * 0.6)
         print(f"{target.name} is bleeding!")    
     def action(self, target):
         print("What will you do?: ")
@@ -222,7 +222,7 @@ class Goblin(Character):
         damage = self.strike(target)
         print(f"{self.name} tears into {target.name}!")
         target.bleedStacks += 2
-        target.bleedDamage += round(damage / 2)
+        target.bleedDamage += round(damage * 0.5)
         print(f"{target.name} is bleeding!")
     def poisonWeapon(self):
         if self.wPoison == 0:
@@ -253,7 +253,45 @@ class Goblin(Character):
         elif self.choice >= 5:
             self.strike(target)
 
-
+class Snake(Character):
+    def __init__(self, name, health, attack, defense, mana, aggro):
+        super().__init__(name, health, attack, defense, mana)
+        self.aggro = aggro
+        self.manaCost = 4
+        self.wPoison = 1
+    def pBite(self, target):
+        self.strike(target)
+        target.poisonStacks += (self.cMana - 2)
+        self.cMana = 0
+        print(f"{self.name}'s fangs inject extra poison into {target.name}!")
+    def burninate(self, target):
+        fireDamage = (self.cMana * 2)
+        if target.block == True:
+            fireDamage /= target.shield
+            fireDamage = round(fireDamage)
+        target.cHealth -= fireDamage
+        print(f"{self.name} burninates {target.name} for {fireDamage} damage!")
+        self.cMana = 0      
+    def actionSelect(self):
+        self.choice = random.randint(1, self.aggro)
+        if self.choice >= 11:
+            print(f"{self.name} is taking a deep breath...")
+        elif self.choice >= 5:
+            print(f"{self.name} takes an aggressive stance.")
+        elif self.choice >= 2:
+            self.defend()
+        else:
+            print(f"{self.name} slithers in circles.")         
+    def action(self, target):
+        if self.choice >= 11:
+            self.burninate(target)
+        elif self.choice >= 8:
+            if self.cMana >= self.manaCost:
+                self.pBite(target)
+            else:
+                print(f"{self.name} tries to bite {target.name}, but doesn't have the Mana.")
+        elif self.choice >= 5:
+            self.strike(target)
         
 #Inventory
 def showInv(player):
@@ -327,22 +365,39 @@ def LevelUp(player):
 
 def spawnEnemy(tier, difficulty, group):
     if group == 1:
-        gobNames = ["Goblin", "Bob Goblin", "Gobert the Terrible"]
-        name = gobNames[tier]
-        gobHealth = [30, 50, 70, 90]
+        names = ["Goblin", "Bob Goblin", "Gobert the Terrible"]
+        name = names[tier]
+        healths = [30, 50, 70, 90]
         if difficulty < 20:
-            health = gobHealth[tier]
+            health = healths[tier]
         else:
-            health = gobHealth[tier + 1]
-        gobPow = [5, 6, 7]
-        power = gobPow[tier]
-        gobDef = [1, 2, 3]
-        defense = gobDef[tier]
-        gobMana = [4, 7, 9]
-        mana = gobMana[tier]
-        gobAggro = [8, 10, 12]
-        aggro = gobAggro[tier]
+            health = healths[tier + 1]
+        pows = [5, 6, 7]
+        power = pows[tier]
+        defs = [1, 2, 3]
+        defense = defs[tier]
+        manas = [4, 7, 9]
+        mana = manas[tier]
+        aggros = [8, 10, 12]
+        aggro = aggros[tier]
         enemy = Goblin(name, health, power, defense, mana, aggro)
+    if group == 2:
+        names = ["Snake", "Weird Snake Joe", "Trogdor the Burninator"]
+        name = names[tier]
+        healths = [25, 50, 75, 100]
+        if difficulty < 20:
+            health = healths[tier]
+        else:
+            health = healths[tier + 1]
+        pows = [3, 4, 5]
+        power = pows[tier]
+        defs = [0, 1, 2]
+        defense = defs[tier]
+        manas = [6, 9, 12]
+        mana = manas[tier]
+        aggros = [8, 10, 12]
+        aggro = aggros[tier]
+        enemy = Snake(name, health, power, defense, mana, aggro)
     if difficulty >= 25:
        pScaling = (difficulty - 23) / 2
        enemy.power += round(pScaling)
@@ -419,7 +474,7 @@ while quit == 0:
     if choice == "1":
         player.charsheet()
     elif choice == "2":
-        group = random.randint(1, 1)
+        group = random.randint(1, 2)
         difficulty = 6 + player.level
         event = random.randint(1, difficulty)
         if event >= 15:
@@ -434,7 +489,7 @@ while quit == 0:
     elif choice == "3":
         useItem(player)
     elif choice == "4":
-        pass
+        LevelUp(player)
     elif choice == "5":
         pass
     else:
