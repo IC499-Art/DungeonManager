@@ -1,6 +1,7 @@
 import random
 import time
 import os
+import math
 
 
 class Character:
@@ -33,9 +34,11 @@ class Character:
     def strike(self, target):
         damage = self.power
         if target.block == True:
-            damage /= target.shield
-            damage = round(damage)
+            blockedDamage = damage / target.shield
+            damage = math.floor(blockedDamage)
         damage -= target.defense
+        if damage < 0:
+            damage = 0
         target.cHealth -= damage
         print(f"{self.name} deals {damage} damage to {target.name}!")
         if self.wPoison >= 1:
@@ -45,7 +48,7 @@ class Character:
 
     def hRegen(self, amount):
         self.cHealth += amount
-        self.cHealth = round(self.cHealth)
+        self.cHealth = math.ceil(self.cHealth)
         if self.cHealth > self.mHealth:
             self.cHealth = self.mHealth
     
@@ -107,7 +110,7 @@ class Berserker(Character):
         damage = self.strike(target)
         print(f"{self.name} tears into {target.name}!")
         target.bleedStacks += 2
-        target.bleedDamage += round(damage * 0.6)
+        target.bleedDamage += math.ceil(damage * 0.6)
         print(f"{target.name} is bleeding!")    
     def action(self, target):
         print("What will you do?: ")
@@ -222,7 +225,7 @@ class Goblin(Character):
         damage = self.strike(target)
         print(f"{self.name} tears into {target.name}!")
         target.bleedStacks += 2
-        target.bleedDamage += round(damage * 0.5)
+        target.bleedDamage += math.ceil(damage * 0.5)
         print(f"{target.name} is bleeding!")
     def poisonWeapon(self):
         if self.wPoison == 0:
@@ -257,18 +260,22 @@ class Snake(Character):
     def __init__(self, name, health, attack, defense, mana, aggro):
         super().__init__(name, health, attack, defense, mana)
         self.aggro = aggro
-        self.manaCost = 4
+        self.manaCost = 3
         self.wPoison = 1
     def pBite(self, target):
         self.strike(target)
-        target.poisonStacks += (self.cMana - 2)
-        self.cMana = 0
+        if self.cMana >= 6:
+            manaPoison = 6
+        else:
+            manaPoison = (self.cMana) 
+        target.poisonStacks += (manaPoison - 2)
+        self.cMana -= manaPoison
         print(f"{self.name}'s fangs inject extra poison into {target.name}!")
     def burninate(self, target):
         fireDamage = (self.cMana * 2)
         if target.block == True:
             fireDamage /= target.shield
-            fireDamage = round(fireDamage)
+            fireDamage = math.ceil(fireDamage)
         target.cHealth -= fireDamage
         print(f"{self.name} burninates {target.name} for {fireDamage} damage!")
         self.cMana = 0      
@@ -276,7 +283,7 @@ class Snake(Character):
         self.choice = random.randint(1, self.aggro)
         if self.choice >= 11:
             print(f"{self.name} is taking a deep breath...")
-        elif self.choice >= 5:
+        elif self.choice >= 6:
             print(f"{self.name} takes an aggressive stance.")
         elif self.choice >= 2:
             self.defend()
@@ -290,8 +297,66 @@ class Snake(Character):
                 self.pBite(target)
             else:
                 print(f"{self.name} tries to bite {target.name}, but doesn't have the Mana.")
-        elif self.choice >= 5:
+        elif self.choice >= 6:
             self.strike(target)
+
+class Cultist(Character):
+    def __init__(self, name, health, attack, defense, mana, aggro):
+        super().__init__(name, health, attack, defense, mana)
+        self.aggro = aggro
+        self.manaCostA = 4
+        self.manaCostB = 3
+    def profaneSmite(self, target):
+        damage = self.strike(target)
+        unholyDamage = (self.cMana * 2) + damage
+        target.cHealth -= unholyDamage
+        print(f"The Void consumes {target.name} for {unholyDamage} damage!")
+        self.cMana = 0  
+    def bloodDraw(self, target):
+        self.cMana -= self.manaCostB
+        damage = self.strike(target)
+        if target == self:
+            print(f"{self.name} makes a blood sacrifice!")
+            self.mMana += 2
+            self.mRegen(2)
+        else:
+            print(f"{self.name} opens up {target.name}!")
+            self.mMana += 1
+            self.mRegen(1)
+        target.bleedStacks += 3
+        target.bleedDamage += math.ceil(damage * 0.25)
+        print(f"{target.name} is bleeding!")      
+    def actionSelect(self):
+        self.choice = random.randint(1, self.aggro)
+        if self.choice >= 11:
+            print(f"{self.name} raises a wicked dagger...")
+        elif self.choice >= 6:
+            print(f"{self.name} takes an aggressive stance.")
+        elif self.choice >= 3:
+            self.defend()
+        else:
+            print(f"{self.name} raises a wicked dagger...")         
+    def action(self, target):
+        if self.choice >= 11:
+            if self.cMana >= self.manaCostB:
+                self.bloodDraw(target)
+            else:
+                print(f"{self.name} doesn't have the mana.")
+        elif self.choice >= 8:
+            if self.cMana >= self.manaCostA:
+                self.profaneSmite(target)
+            else:
+                print(f"{self.name} tries to smite {target.name}, but doesn't have the Mana.")
+        elif self.choice >= 6:
+            self.strike(target)
+        elif self.choice < 3:
+            if self.cHealth <= self.power:
+                print(f"Gasping, {self.name} stays their hand.")
+            elif self.cMana >= self.manaCostB:
+                self.bloodDraw(self)
+            else:
+                print(f"{self.name} doesn't have the mana.")
+        
         
 #Inventory
 def showInv(player):
@@ -372,19 +437,19 @@ def spawnEnemy(tier, difficulty, group):
             health = healths[tier]
         else:
             health = healths[tier + 1]
-        pows = [5, 6, 7]
+        pows = [6, 7, 8]
         power = pows[tier]
-        defs = [1, 2, 3]
+        defs = [2, 3, 4]
         defense = defs[tier]
         manas = [4, 7, 9]
         mana = manas[tier]
         aggros = [8, 10, 12]
         aggro = aggros[tier]
         enemy = Goblin(name, health, power, defense, mana, aggro)
-    if group == 2:
+    elif group == 2:
         names = ["Snake", "Weird Snake Joe", "Trogdor the Burninator"]
         name = names[tier]
-        healths = [25, 50, 75, 100]
+        healths = [20, 40, 60, 80]
         if difficulty < 20:
             health = healths[tier]
         else:
@@ -393,18 +458,35 @@ def spawnEnemy(tier, difficulty, group):
         power = pows[tier]
         defs = [0, 1, 2]
         defense = defs[tier]
-        manas = [6, 9, 12]
+        manas = [7, 11, 15]
         mana = manas[tier]
         aggros = [8, 10, 12]
         aggro = aggros[tier]
         enemy = Snake(name, health, power, defense, mana, aggro)
-    if difficulty >= 25:
-       pScaling = (difficulty - 23) / 2
-       enemy.power += round(pScaling)
+    elif group == 3:
+        names = ["Cultist", "Big Cultist", "Mega Cultist"]
+        name = names[tier]
+        healths = [40, 60, 80, 100]
+        if difficulty < 20:
+            health = healths[tier]
+        else:
+            health = healths[tier + 1]
+        pows = [5, 6, 7]
+        power = pows[tier]
+        defs = [1, 2, 3]
+        defense = defs[tier]
+        manas = [4, 6, 8]
+        mana = manas[tier]
+        aggros = [8, 10, 12]
+        aggro = aggros[tier]
+        enemy = Cultist(name, health, power, defense, mana, aggro)
+    if difficulty >= 30:
+       pScaling = (difficulty - 27) / 3
+       enemy.power += math.ceil(pScaling)
     if difficulty >= 30:
         hScaling = ((difficulty - 28) * 0.1) + 1
-        enemy.mHealth = round(enemy.mHealth * hScaling)
-        enemy.cHealth = round(enemy.cHealth * hScaling)
+        enemy.mHealth = math.ceil(enemy.mHealth * hScaling)
+        enemy.cHealth = math.ceil(enemy.cHealth * hScaling)
     return enemy
     
 
@@ -474,7 +556,7 @@ while quit == 0:
     if choice == "1":
         player.charsheet()
     elif choice == "2":
-        group = random.randint(1, 2)
+        group = random.randint(1, 3)
         difficulty = 6 + player.level
         event = random.randint(1, difficulty)
         if event >= 15:
